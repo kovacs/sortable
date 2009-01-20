@@ -1,0 +1,66 @@
+<head>
+	<style>
+	.sortup {
+	  background-color: orange;	
+	}
+
+	.sortdown {
+	  background-color: yellow;	
+	}
+	</style>
+<head>
+	
+<%@action = params[:action]%>
+<%=link_to 'Activated', :action => 'list_users_filtered', :status => '800', :verified => true%>
+
+<div>
+Search Users
+<%=start_form_tag({:action => 'search', :controller => 'user'}, {:method => 'get', :id => 'search_form'})%>
+  <%=text_field_tag("query", params['query'], :size => 10 ) %> 
+  <%=select_tag('query_field', options_for_select(@search_options, params[:query_field]))%>
+  <%=submit_tag 'Submit'%>
+<%=end_form_tag%>
+</div>
+
+<div >
+	<%=@first_object%> - <%=@last_object%> of <%=@total_object_count%>	
+	<%if @object_paginator.page_count > 1 %>
+	&nbsp;&nbsp;&nbsp;Page&nbsp;:
+	<%= pagination_links @object_paginator, @action, @extra_params %>
+	<%end%>
+</div>
+
+<table width="100%" style="border: 1px solid black;" cellpadding="0" cellspacing="0">
+  <thead style='background: #42ad23	;'>
+	<tr>
+	<%@headings.each do |heading|%>
+		<td <%= sort_td_class_helper heading[1]%>>
+	        <%= sort_link_helper @action, heading[0], heading[1], params, @extra_params%>
+		</td>
+	<%end%>
+	</tr>
+  </thead>
+  <tbody>
+	<%if @objects.size == 0%>
+  	  <tr><td colspan='3'>No users in the list</td></tr>
+	<%else  
+	    @objects.each do |user|
+     %>
+	    <tr id='user<%=user.id%>'>
+			<td>
+				<%=user.status%>
+			</td>
+		<td>
+			<%=user.contact_info.to_s%>
+		</td>
+		<td>
+		    <%=user.email%>
+		</td>
+		<td>
+			<%=user.created_at%>
+		</td>
+		</tr>
+	<%  end
+	 end%>
+	</tbody>
+</table>

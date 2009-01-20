@@ -1,0 +1,213 @@
+It's been a very long time since my last post. Been busy with lots of things in my personal life as well as with the project that I'm working on. I've had some downtime recently and am getting back into the swing of things which is good because next week I'm participating in a ruby meetup discussion panel. The subject is real world rails usage. Pros/cons which I guess is why I was asked to participate :-) I was thinking of what to talk about. Should I point out the flaws or shortcomings of rails vs. the java equivalent? Should I discuss the merits of rails? Or should I talk about something that I recently created and wanted to factor out into a plugin for others to use. 
+
+I decided I'm going to go with the last one and talk about how to easily create sortable HTML data tables with rails. Back in August or so I had need to create a listing of objects and be able to sort them by column. I started looking around and sure enough someone had written an article on how to perform exactly that (<a href="http://dev.nozav.org/rails_ajax_table.html">http://dev.nozav.org/rails_ajax_table.html</a>). So why in the heck am I writing about this? Well, because the solution there is an AJAX based sort/search which isn't what I want. Many folks talk about appropriate use of AJAX and one of the pet peeves is not to break the refresh button. The AJAX solution does exactly that. You perform your sort/search, refresh the page and your state is lost. I wanted a plain old fashioned sortable table that performed search without the AJAX flash. I could use serverside state to track the view state in the case of a refresh but I'm a fan on KISS and having the URL reflect the state is the cleanest way of achieving what I want. If things need to be more AJAXy later on I can revisit but for now this is what I'm going with.
+
+I'm happy to say that I managed to extract the code into about 160 lines that I'm structuring as a plugin. Unfortunately it isn't seamless to install because I had some difficulty mixing in the controller and helper methods with the init.rb plugin mechansim. So for now a small change to your app is required until I take some more time to figure out how to have it install seamlessly. I apologize ahead of time as there are no tests. I've not had the time to dedicate to them yet but plan to in the near future. I am using this plugin in my app under development so it will have changes/improvements if needed though it pretty much does what I need now so I don't imagine a ton of change other than ease of use and bug fixes.
+
+Open a terminal window and cd to the root of your app and install the plugin with:
+
+<blockquote><pre><code>ruby script/plugin install http://sortable.googlecode.com/svn/trunk/sortable
++ ./sortable/README
++ ./sortable/readme.html
++ ./sortable/Rakefile
++ ./sortable/example/controllers/user_controller.rb
++ ./sortable/example/views/user/list_users.rhtml
++ ./sortable/example/views/user/list_users_filtered.rhtml
++ ./sortable/example/views/user/search.rhtml
++ ./sortable/init.rb
++ ./sortable/install.rb
++ ./sortable/lib/sortable.rb
++ ./sortable/tasks/sortable_tasks.rake
++ ./sortable/test/sortable_test.rb
+</code></pre></blockquote>
+
+Once that's done you need to include the helper and controller methods in order to use the plugin. 
+Make the following changes to your app:
+
+In application_helper.rb
+<blockquote><pre><code>require 'sortable'
+module ApplicationHelper
+    include Sortable::SortableHelper
+</code></pre></blockquote>
+In application.rb
+<blockquote><pre><code>require 'sortable'
+class ApplicationController < ActionController::Base
+  include ApplicationHelper
+  include Sortable::ClassMethods
+</code></pre></blockquote>
+
+Let's see a simple example of how to use the sortable table "plugin". The code that's used in this blog posting comes with the plugin so you can open it and follow along there as well as use it as a template to integrate into your app. Imagine you'd like to create a sortable table of the users in your system. You could add the following code to your user controller or whatever controller you like. This example assumes you have fields called status, email, created_at in a table named users. It also assumes that you have another table named 'contact_infos' and have a field called 'firstname'. 
+You'll have to adjust the code below to match the schema of whatever objects you'd like to create a sortable table for. 
+
+<blockquote><pre><code>  TABLE_HEADINGS = [['Status', 'status'],
+                    ['Name', 'name'],
+                    ['User email', 'email',],
+                    ['Created Date', 'created_at']                    ]
+  
+  DEFAULT_SORT = ['users.email', 'DESC']
+                    
+  # this maps the name of the column sorting param to the DB column. The columns without a table default to the model being queried
+  SORT_MAP = {'status' => 'users.status', 
+              'name' => 'contact_infos.firstname',
+              'email' => 'users.email',
+              'created_at' => 'users.created_at'}<br/>
+  INCLUDED_RELATIONS = [:contact_info]  <br/>
+  def list_users
+    @headings = TABLE_HEADINGS
+    get_sorted_objects(User, params, SORT_MAP, INCLUDED_RELATIONS, DEFAULT_SORT)    
+  end
+</code></pre></blockquote>
+So you see we have a few constants that we've defined and a single action method.
+Let's go over each of them in detail:
+
+TABLE_HEADINGS - This maps what is shown in the table heading to a key that's used for sorting. So 'Status' is the string shown in the table's column heading and 'status' is a key that's used to correlate that table heading to the entry in the SORT_MAP. This is only used when building the table heading UI and links.
+
+DEFAULT_SORT - The table's data is going to be sorted in some manner by default so you must provide which of the fields you'd like to sort by. The UI will reflect your choice (either 'DESC' or '').
+
+SORT_MAP - This maps the key used in TABLE_HEADINGS to the database table.column that correlates to the table column. This map can contain fields that are in the class whose objects are being fetched, (User in this example), and it can also contain fields of related objects, (ContactInfo in this example). So for example when a URL of http://myhost.com/user/list_users?sort=name is created this map is used to do the proper sort when executing the finder query.
+
+INCLUDED_RELATIONS - This is used to include related objects that are being used in the SORT_MAP. In this example we're using contact_info so we want to include that relation to prevent extraneous DB trips while processing the resulting object list.
+
+list_users - This action simply calls the plugin method that will fetch objects in the desired sorting order.
+
+After the list_users action is called its view template is rendered. In that template there are some variables that have been populated with data that make it easy to get at and create your HTML table.
+
+Here's the view template listing (list_users.rhtml):
+<blockquote><pre><code>
+&lt;head&gt;
+	&lt;style&gt;
+	.sortup {
+	  background-color: orange;	
+	}
+	.sortdown {
+	  background-color: yellow;	
+	}
+	&lt;/style&gt;
+&lt;head&gt;
+&lt;%@action = params[:action]%&gt;
+&lt;div &gt;
+	&lt;%=<b>@first_object</b>%&gt; - &lt;%=<b>@last_object</b>%&gt; of &lt;%=<b>@total_object_count</b>%&gt;	
+	&lt;%if <b>@object_paginator</b>.page_count &gt; 1 %&gt;
+	&amp;nbsp;&amp;nbsp;&amp;nbsp;Page&amp;nbsp;:
+	&lt;%= pagination_links <b>@object_paginator</b>, @action %&gt;
+	&lt;%end%&gt;
+&lt;/div&gt;
+&lt;table width="100%" style="border: 1px solid black;" cellpadding="0" cellspacing="0"&gt;
+  &lt;thead style='background: green;'&gt;
+	&lt;tr&gt;
+	&lt;%@headings.each do |heading|%&gt;
+		&lt;td &lt;%= sort_td_class_helper heading[1]%&gt;&gt;
+	        &lt;%= sort_link_helper @action, heading[0], heading[1], params%&gt;
+		&lt;/td&gt;
+	&lt;%end%&gt;
+	&lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+	&lt;%if <b>@objects</b>.size == 0%&gt;
+  	  &lt;tr&gt;&lt;td colspan='3'&gt;No users in the list&lt;/td&gt;&lt;/tr&gt;
+	&lt;%else  
+	    <b>@objects</b>.each do |user|
+          %&gt;
+	    &lt;tr id='user&lt;%=user.id%&gt;'&gt;
+		&lt;td&gt;
+		    &lt;%=user.status%&gt;
+		&lt;/td&gt;
+		&lt;td&gt;
+		    &lt;%=user.contact_info.to_s%&gt;
+		&lt;/td&gt;
+		&lt;td&gt;
+		    &lt;%=user.email%&gt;
+		&lt;/td&gt;
+		&lt;td&gt;
+		    &lt;%=user.created_at%&gt;
+		&lt;/td&gt;
+		&lt;/tr&gt;
+	&lt;%  end
+	 end%&gt;
+   &lt;/tbody&gt;
+&lt;/table&gt;
+</code></pre></blockquote>
+There are 5 instance variables that are populated for use in the view template. I debated the merits of returning a hash that contains these 5 variables but opted for the convention route. I may change my mind but I thought it would be nice to just have less code and the variables are reasonably named.
+
+<blockquote><pre><code>@object_paginator - This is the paginator object that's used to build the pagination links.
+@total_object_count - The total number of objects that were returned by the finder.
+@first_object - The offset of the first object being displayed on this page.
+@last_object - The offset of the last object being displayed on this page. 
+@objects - The array of objects that were returned by the finder.</code></pre></blockquote>
+
+You'll notice that all of the variables that are set by the plugin are in bold. There are a couple of other things to notice. <br/>
+- There is an inline style at the top of the page. This is used by the helper method to style the column headers based on which column is currently the sort column and which direction it's sorted.<br/>
+- The @headings variable that we set in our action method is iterated over and used to build the column headings. 
+
+After the headings are created we build the body by iterating over the array of returned @objects. Be sure that when you build the table body that you display the column data in the same order as you created the table headings so that the data and headers lineup properly. 
+
+That's pretty much it as far as the simple case goes. There are 2 more things that you can do with the plugin: 
+<ol>
+<li>Add column specific search capability (i.e. Search the email column for foo@bar.com) This is not a replacement for a real database wide search such as Lucene but for simple column searching this will fit the bill.
+<li>Custom filtering conditions. (i.e. Show me all the users that match a certain status and whose emails have been verified) 
+</ol>
+
+To add search to the page and receive the results in a sortable, paginated table you simply add a search field to your page or for our purposes created a new search.rhtml page and copy the contents of list_users.rhtml into it to start. (there's a search.rhtml template in the plugin example directory that reflects the changes described here):
+<blockquote><pre><code>&lt;div&gt;
+Search Users
+&lt;%=start_form_tag({:action =&gt; 'search', :controller =&gt; 'user'}, {:method =&gt; 'get', :id =&gt; 'search_form'})%&gt;
+  &lt;%=text_field_tag("query", @params['query'], :size =&gt; 10 ) %&gt; 
+  &lt;%=select_tag('query_field', options_for_select(<b>@search_options</b>, params[:query_field]))%&gt;
+  &lt;%=submit_tag 'Submit'%&gt;
+&lt;%=end_form_tag%&gt;
+&lt;/div&gt;
+</code></pre></blockquote>
+It's important to note that the plugin looks for both 'query' and 'query_field' as part of the params hash so make sure you provide both values when calling the plugin for sortable search results. We'll see in a little bit how the search is executed. After you modify your view page go back to your controller and create a new action in your user controller named 'search' and add the following code. The main differences between this action and the 'list_users' action is that we're setting up the search fields and calling 'search_objects' instead of 'sort_objects' and an additional parameter called a search_map is included in the call.  
+<blockquote><pre><code>  SEARCH_OPTIONS = [['', ''],
+                    ['Name', 'name'],
+                    ['User email', 'email']]
+  SEARCH_MAP = {'email' => ['users.email'],
+                 'name' => ['contact_infos.firstname']}<br/>
+  def search
+    @search_options = SEARCH_OPTIONS
+    @headings = TABLE_HEADINGS
+    <b>search_objects(User, params, SORT_MAP, INCLUDED_RELATIONS, DEFAULT_SORT, SEARCH_MAP)</b>
+  end
+</code></pre></blockquote>
+Now you're ready to go try out your search. Simply load up your 'search' page ('http://localhost:3000/user/search'), type your text into the textfield, select the field to search and hit search. If there are any results you'll see them in the resulting sortable/paginated table.
+
+That covers the most common usages for the plugin but there's one final usage that's a bit more esoteric. I have need for this myself and so that's why it's part of the plugin. I have need to create "filters" or basically searches that meet criteria for fields that aren't displayed on screen, or more than one field at a time. 
+I suppose you can think of this like "tagging" in some ways but let's have a look at an example and it'll help clarify exactly what you can do.
+
+Let's say I want to add a link on our page that when clicked will show me the users that have a specific status and whose email address has either been verified or not.
+
+The way I would add that into our current app creating yet another template called 'list_users_filtered.rhtml' and copying the contents of search.rhtml or list_users.rhtml to it and then add a list_users_filtered action the controller as follows:
+<blockquote><pre><code>  def list_users_filtered
+    @search_options = SEARCH_OPTIONS
+    @headings = TABLE_HEADINGS
+    get_sorted_objects(User, params, SORT_MAP, INCLUDED_RELATIONS, DEFAULT_SORT, <b>process_custom_params(params)</b>)    
+  end<br/>
+<b>  def process_custom_params(params)
+       if params[:status]
+         conditions = 'users.status = ' + params[:status]
+       end
+       if params[:verified]
+         verified = 'users.email_verified = ' + params[:verified]
+         if conditions
+           conditions += ' and ' + verified
+         else
+           conditions = verified
+         end         
+       end
+       @extra_params = {:status => params[:status], :verified => params['verified']}
+       return conditions
+  end</b>
+</code></pre></blockquote>
+All we did was to pass another parameter to our call to 'get_sorted_objects'. This is the set of conditions that we'd like to apply to the find method when fetching the objects for display. So it's like a search but structured as well as based on at least one field that isn't displayed. Notice we also create an object called <b>@extra_params</b>. This object will be used in our view to build the pagination and column sorting links so that they include our custom criteria.
+
+The modifications to the view are trivial. Basically you add @extra_params as a parameter to two method calls in your view. 'pagination_links' and 'sort_link_helper'. So the calls in your view would look like this:
+<blockquote><pre><code>
+&lt;%= pagination_links @object_paginator, @action, @extra_params %&gt;
+&lt;%= sort_link_helper @action, heading[0], heading[1], params, @extra_params %&gt;
+</code></pre></blockquote>
+
+The final modification to your view is to create a link somewhere that employs our filter as follows:
+<blockquote><pre><code>&lt;%=link_to 'Activated', :action =&gt; 'list_users', :status =&gt; '800', :verified =&gt; true%&gt;</code></pre></blockquote>
+
+That's it! Hopefully people will find this plugin useful. It's pretty easy to hack it up and customize it further to suit your needs but out of the box it's pretty nice to get something that accomplishes the most common usages with minimal amount of configuration/effort. The examples here aren't exactly how you'd likely build your solution. You likely wouldn't build an entirely separate action/view for each of the features but I did so here to help demonstrate the differences in features.
+The code isn't perfect as there are probably a couple of minor smells I think so comments/suggestions improvements, bug fixes are certainly welcome. Enjoy!

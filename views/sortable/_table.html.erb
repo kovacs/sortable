@@ -1,0 +1,28 @@
+<table width="100%" style="border: 1px solid black;" cellpadding="0" cellspacing="0">
+  <thead style='background: #42ad23	;'>
+	<tr>
+	<%@headings.each do |heading|%>
+      <% sort_class = sort_td_class_helper heading[1] %>
+		<td<% if !sort_class.blank? %> class='<%= sort_class %>'<% end %>>
+	        <%= sort_link_helper @action, heading[0], heading[1], params%>
+		</td>
+	<%end%>
+	</tr>
+  </thead>
+  <tbody>
+	<%if @objects.size == 0%>
+  	  <tr><td colspan='3'>No items in the list</td></tr>
+	<%else  
+	    @objects.each do |object|
+     %>
+	    <tr id='<%=dom_id(object)%>'>
+         <% @headings.each do |heading| %>
+             <td>
+               <%= object.send(heading[1]) %>
+             </td>
+         <% end %>
+		</tr>
+	<%  end
+	 end%>
+	</tbody>
+</table>
