@@ -68,66 +68,79 @@ module Sortable
       #   and the table is now sortable by a related object's column and is the default sort value for the table.
       #
       def sortable_table(klass, options={})
-        @@klass = klass
+        @@sortable_table_options ||={}
+
+        table_headings = nil
+
         if options[:table_headings].nil?
-          @@table_headings = @@klass.column_names.collect do |att|          
+          table_headings = klass.column_names.collect do |att|          
             [att.humanize, att]
           end
         else
-          @@table_headings = options[:table_headings]
+          table_headings = options[:table_headings]
         end
 
+        default_sort = nil
         if options[:default_sort].nil?
-          @@default_sort = ['id', 'DESC']
+          default_sort = ['id', 'DESC']
         else
-          @@default_sort = options[:default_sort]
+          default_sort = options[:default_sort]
         end
         
-        @@sort_map = HashWithIndifferentAccess.new
+        sort_map = HashWithIndifferentAccess.new
         if options[:sort_map].nil?
-          @@klass.column_names.each do |col|
-            @@sort_map[col] = ["#{@@klass.table_name}.#{col}", 'DESC']
+          klass.column_names.each do |col|
+            sort_map[col] = ["#{klass.table_name}.#{col}", 'DESC']
           end
         else
-          @@sort_map.merge!(options[:sort_map])
+          sort_map.merge!(options[:sort_map])
         end
-        
+
+        per_page = nil
         if options[:per_page].nil?
-          @@per_page = 10
+          per_page = 10
         else
-          @@per_page = options[:per_page]
+          per_page = options[:per_page]
         end
-        
+
+        include_relations = nil
         if options[:include_relations].nil?
-          @@include_relations = []
+          include_relations = []
         else
-          @@include_relations = options[:include_relations]
+          include_relations = options[:include_relations]
         end
+
+        @@sortable_table_options[controller_name] = {:class => klass,
+                                                     :table_headings => table_headings,
+                                                     :default_sort => default_sort,
+                                                     :sort_map => sort_map,
+                                                     :per_page => per_page,
+                                                     :include_relations => include_relations}
         
         module_eval do
           include Sortable::InstanceMethods
           def sortable_class
-            @@klass
+            @@sortable_table_options[controller_name][:class]
           end
 
           def sortable_table_headings
-            @@table_headings
+            @@sortable_table_options[controller_name][:table_headings]
           end
           
           def sortable_default_sort
-            @@default_sort
+            @@sortable_table_options[controller_name][:default_sort]
           end
           
           def sortable_sort_map
-            @@sort_map
+            @@sortable_table_options[controller_name][:sort_map]
           end
           
           def sortable_per_page
-            @@per_page
+            @@sortable_table_options[controller_name][:per_page]
           end
           
           def sortable_include_relations
-            @@include_relations
+            @@sortable_table_options[controller_name][:include_relations]
           end
         end
     end
