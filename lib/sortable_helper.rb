@@ -60,7 +60,15 @@ module SortableHelper
       :params => params}
     return options
   end
-      
+
+   def row_cell_link(new_location)
+     mouseover_pointer + "onclick='window.location=\"#{new_location}\"'"
+   end
+
+   def mouseover_pointer
+     "onmouseover='this.style.cursor = \"pointer\"' onmouseout='this.style.cursor=\"auto\"'"
+   end
+
 #  def pagination_links(paginator, action, params, extra_params={})
 #    page_options = {:window_size => 1}
 #    pagination_links_each(paginator, page_options) do |n|
