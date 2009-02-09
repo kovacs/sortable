@@ -22,7 +22,7 @@ module SortableHelper
     search = options[:search].nil? ? false : options[:search]
 
     result = render(:partial => partial, :locals => {:search => search})
-    result += will_paginate(@objects) if paginate
+    result += will_paginate(@objects).to_s if paginate
     result
   end
  
