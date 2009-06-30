@@ -14,12 +14,12 @@ module SortableHelper
   #              @headings contains the table heading values
   #              @objects contains the collection of objects to be displayed in the table
   #              
-  # :search - Whether or not to include a search field for the table. Default is false.
+  # :search - Whether or not to include a search field for the table. Default is true.
   #
   def sortable_table(options={})
     paginate = options[:paginate].nil? ? true : options[:paginate]
     partial = options[:partial].nil? ? 'sortable/table' : options[:partial]  
-    search = options[:search].nil? ? false : options[:search]
+    search = options[:search].nil? ? true : options[:search]
 
     result = render(:partial => partial, :locals => {:search => search})
     result += will_paginate(@objects).to_s if paginate
@@ -37,9 +37,8 @@ module SortableHelper
 
   def sort_link_helper(action, text, param, params, extra_params={})
     options = build_url_params(action, param, params, extra_params)
-    html_options = {
-      :title => "Sort by this field"
-    }        
+    html_options = {:title => "Sort by this field"}        
+    
     link_to(text, options, html_options)
   end
 
@@ -52,13 +51,10 @@ module SortableHelper
     end
     params = {:sort => key, 
       :page => nil, # when sorting we start over on page 1
-      :query => params[:query], 
-      :query_field => params[:query_field]}
+      :q => params[:q]}
     params.merge!(extra_params)
 
-    options = {:action => action, 
-      :params => params}
-    return options
+    return {:action => action, :params => params}
   end
 
    def row_cell_link(new_location)
@@ -69,20 +65,17 @@ module SortableHelper
      "onmouseover='this.style.cursor = \"pointer\"' onmouseout='this.style.cursor=\"auto\"'"
    end
 
-#  def pagination_links(paginator, action, params, extra_params={})
-#    page_options = {:window_size => 1}
-#    pagination_links_each(paginator, page_options) do |n|
-#      params = {:sort => params['sort'], 
-#        :page => n, 
-#        :query => params[:query], 
-#        :query_field => params[:query_field]}
-#      params.merge!(extra_params)
-#          
-#      link_to(n.to_s, {:action => action, :params => params})
-#    end
-#  end
-#
-#  def value_provided?(params, name)
-#    !params[name].nil? && !params[name].empty?
-#  end
+   def table_header
+     result = "<tr class='tableHeaderRow'>"
+     	 @headings.each do |heading|
+         sort_class = sort_td_class_helper heading[1]
+      	 result += "<td"
+   		   result += " class='#{sort_class}'" if !sort_class.blank? 
+   		   result += ">"
+   		   result += sort_link_helper @action, heading[0], heading[1], params
+   		   result += "</td>"
+   		end   
+   		result += "</tr>"
+   		return result
+   end
 end

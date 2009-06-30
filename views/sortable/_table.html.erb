@@ -1,27 +1,77 @@
-<table width="100%" style="border: 1px solid black;" cellpadding="0" cellspacing="0">
-  <thead style='background: #42ad23	;'>
-	<tr>
-	<%@headings.each do |heading|%>
-      <% sort_class = sort_td_class_helper heading[1] %>
-		<td<% if !sort_class.blank? %> class='<%= sort_class %>'<% end %>>
-	        <%= sort_link_helper @action, heading[0], heading[1], params%>
-		</td>
-	<%end%>
-	</tr>
+<style>
+.sortableTable {
+  border: 1px solid #999;
+  background-image:url(http://www.cablecarsoftware.com/images/logo_opaque.png);	
+	background-position: center;
+	background-repeat:no-repeat;	
+}
+
+.sortableTable td {
+	font-size: .95em;
+	padding: 3px 6px;
+	color: #101010;
+	border-bottom: 1px solid #999;
+}
+
+.sortableTable tr.odd td {
+/*  background-color:#EEE;*/
+}
+
+.sortableTable tr.tableHeaderRow td {
+	color: #830519;	
+  background: #c7e1f0;
+	border-top: 1px solid #830519;
+	border-bottom: 1px solid #830519;
+	font-weight: bold;
+}
+
+.sortableTable tr.tableHeaderRow td.sortup {
+	background-color: #faf1ed;
+	background-image:url(../images/arrow_down.gif);	
+	background-position: top right;
+	background-repeat:no-repeat;
+	
+}
+
+.sortableTable tr.tableHeaderRow td.sortdown {
+	background-color: #faf1ed;
+	background-image:url(../images/arrow_up.gif);	
+	background-position: top right;
+	background-repeat:no-repeat;
+}
+
+#search {
+  padding: 10px;
+}
+</style>
+
+<% if search %>
+  <div id='search'>
+  <% form_tag({:action => @action}, {:method => 'get', :id => 'search_form'}) do %>
+    <%=text_field_tag("q", params['q'], :size => 10 ) %> 
+    <%=submit_tag 'Search'%>
+  <% end %>
+  </div>
+<% end %>
+
+<table width="100%" class='sortableTable' cellpadding="0" cellspacing="0">
+  <thead>
+    <%= table_header %>
   </thead>
   <tbody>
 	<%if @objects.size == 0%>
-  	  <tr><td colspan='3'>No items in the list</td></tr>
+  	  <tr><td colspan='<%= @headings.size %>'>No items in the list</td></tr>
 	<%else  
 	    @objects.each do |object|
-     %>
-	    <tr id='<%=dom_id(object)%>'>
+	        klass = cycle('odd', 'even')        
+        %>
+	    <tr id='<%=dom_id(object)%>' class='<%= klass %>'>
          <% @headings.each do |heading| %>
              <td>
                <%= object.send(heading[1]) %>
              </td>
          <% end %>
-		</tr>
+  		</tr>
 	<%  end
 	 end%>
 	</tbody>

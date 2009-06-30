@@ -10,17 +10,24 @@ module Sortable
       #
       # usage: sortable_table class_to_tabularize, optional_params
       # 
-      # example: 
+      # simplest example possible: 
       # 
       # In your controller...
       # 
       # sortable_table User
       # 
+      # If you need a bit more control over how the objects are fetchd and displayed this is
+      # the next simplest example:
+      #
+      # Override the index action in your controller:
+      #
       # def index
       #  get_sorted_objects(params)        
       # end
       # 
-      # In whatever view (within the same controller) you'd like to show a sortable table within
+      # In your index action template (within the same controller) put in a helper call to show a sortable table. You can
+      # create your own table partial to be used to display the objects. See the sortable/views/sortable/_table.html.erb 
+      # (which is the default template used by the plugin) for an example. 
       # 
       # <%= sortable_table %>
       # 
@@ -80,12 +87,9 @@ module Sortable
           table_headings = options[:table_headings]
         end
 
-        default_sort = nil
-        if options[:default_sort].nil?
-          default_sort = ['id', 'DESC']
-        else
-          default_sort = options[:default_sort]
-        end
+        default_sort = options[:default_sort].nil? ? ['id', 'DESC'] : options[:default_sort]
+        per_page = options[:per_page].nil? ? 10 : options[:per_page]
+        include_relations = options[:include_relations].nil? ? [] : options[:include_relations]
         
         sort_map = HashWithIndifferentAccess.new
         if options[:sort_map].nil?
@@ -96,24 +100,13 @@ module Sortable
           sort_map.merge!(options[:sort_map])
         end
 
-        per_page = nil
-        if options[:per_page].nil?
-          per_page = 10
-        else
-          per_page = options[:per_page]
-        end
-
-        include_relations = nil
-        if options[:include_relations].nil?
-          include_relations = []
-        else
-          include_relations = options[:include_relations]
-        end
+        search_array = options[:search_array].nil? ? sort_map.values.collect {|v| v[0]} : options[:search_array]
 
         @@sortable_table_options[controller_name] = {:class => klass,
                                                      :table_headings => table_headings,
                                                      :default_sort => default_sort,
                                                      :sort_map => sort_map,
+                                                     :search_array => search_array,
                                                      :per_page => per_page,
                                                      :include_relations => include_relations}
         
@@ -135,6 +128,10 @@ module Sortable
             @@sortable_table_options[controller_name][:sort_map]
           end
           
+          def sortable_search_array
+            @@sortable_table_options[controller_name][:search_array]
+          end
+          
           def sortable_per_page
             @@sortable_table_options[controller_name][:per_page]
           end
@@ -147,12 +144,13 @@ module Sortable
       
     end
     
-    module InstanceMethods
-      
-#      def search_objects(objects, params, sort_map, include_rel, default_sort, search_map, items_per_page=ITEMS_PER_PAGE)
-#        conditions = process_search(params, search_map)      
-#        get_sorted_objects(objects, params, sort_map, include_rel, default_sort, conditions, items_per_page)                 
-#      end
+    module InstanceMethods      
+      # default impl for listing a collection of objects. Override this action in your controller to fetch objects
+      # differently and/or to render a different template.
+      def index
+        get_sorted_objects(params)  
+        render :template => 'sortable/index'
+      end
       
       # Users can also pass in optional conditions that are used by the finder method call. For example if only wanted to
       # show the items that had a certain status value you could pass in a condition 'mytable.status == 300' for example
@@ -164,7 +162,10 @@ module Sortable
         @headings = options[:table_headings].nil? ? sortable_table_headings : options[:table_headings]
         sort_map = options[:sort_map].nil? ? sortable_sort_map : HashWithIndifferentAccess.new(options[:sort_map])
         default_sort = options[:default_sort].nil? ? sortable_default_sort : options[:default_sort]
-        conditions = options[:conditions]
+        conditions = options[:conditions].nil? ? '' : options[:conditions]
+        search_array = options[:search_array].nil? ? sortable_search_array : options[:search_array]
+        
+        conditions = process_search(params, conditions, search_array)
         items_per_page = options[:per_page].nil? ? sortable_per_page : options[:per_page]
        
         @sort_map = sort_map
@@ -184,30 +185,25 @@ module Sortable
                                  :per_page => items_per_page)
       end
 
-      # The search mechanism takes a search map which is a key to an array of DB table columns to search for the given key.
-      # The user specifies the key in the select box and the corresponding conditions for the finder query are built here.
-#      def process_search(params, search_map)
-#        conditions = ''
-#        if value_provided?(params, :query) &&
-#           value_provided?(params, :query_field)
-#          field = params[:query_field]
-#          if search_map[field]
-#            columns_to_search = ''
-#            values = Array.new        
-#            g = Generator.new(search_map[field])
-#            g.each do |col|
-#              columns_to_search += col + ' LIKE ? '
-#              columns_to_search += 'OR ' unless g.end?
-#              values<< "%#{params[:query]}%"
-#            end
-#            conditions = [columns_to_search] + values unless params[:query].nil?
-#          end
-#        end
-#        if conditions.empty?
-#          conditions = nil # don't provide the find method with any search conditions
-#        end
-#        return conditions
-#      end
+      def process_search(params, conditions, search_array)
+        if !params[:q].blank?
+          columns_to_search = ''
+          values = Array.new        
+          g = Generator.new(search_array)
+          g.each do |col|
+           columns_to_search += col + ' LIKE ? '
+           columns_to_search += 'OR ' unless g.end?
+           values<< "%#{params[:q]}%"
+          end
+          conditions += ' and' if !conditions.blank?
+          conditions = [conditions + ' (' + columns_to_search + ')'] + values unless params[:q].blank?
+        end
+        return conditions
+      end
+
+      def value_provided?(params, name)
+        !params[name].nil? && !params[name].empty?
+      end
 
       def process_sort(params, sort_map, default_sort)
         if params['sort']
@@ -216,7 +212,7 @@ module Sortable
           # fetch the table.column from the sortmap for the given sort key and append the sort direction
           sort = sort_map[default_sort[0]][0] + ' ' + default_sort[1]            
           
-          # NOTICE these variables are used in the sort_link_helper and sort_td_class_helper to build the column link headings
+          # These variables are used in the sort_link_helper and sort_td_class_helper to build the column link headings
           # and create the proper CSS class for the column heading for the case where there is no sort param.
           @default_sort = default_sort[0]
           if default_sort[1] && default_sort[1] == 'DESC'

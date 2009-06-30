@@ -1,81 +1,47 @@
 class Strongbits::UsersController < ActionController::Base
 
+  # By default this will create an index action that uses the default sortable table partial to render the list of objects
   sortable_table Strongbits::User
-  
-  # this action shows with pagination
+
+  # The following index action demonstrates various ways that you can fetch and display your objects in a paginated, sortable,
+  # searchable table. Each clause in the elsif chain below could be its own index action on its own but all are included here
+  # for demo and testing purposes. Each example is triggered by passing the appropriate param value to trigger the desired
+  # clause to demo.
   def index
-    get_sorted_objects(params)
+    if params[:filter_example]
+      # This demonstrates the ability to add additional conditions to fetching the list of objects. This will filter
+      # the results to the list of active users
+      if params[:active]
+        conditions = 'strongbits_users.status = "active"'
+      end
+      get_sorted_objects(params, :conditions => conditions)      
+    elsif params[:complex_example]
+      # This example demonstrates a more complicated example that displays the flexibility of creating the sortable table.
+      # Here we are showing an attribute on a related object as a sortable column in the table, namely the contact_info name
+      # column. We're also restricting the visible columns to 3 columns as well as defining the sort order for each column
+      # as well as the default sort column. We're also specifying what columns should be used when a search is performed.
+      # Finally we're also setting the number of results to show per page.
+      get_sorted_objects(params, :include_relations => [:contact_info],
+                                 :table_headings => [['Username', 'username'], ['Status', 'status'], ['Name', 'name']],
+                                 :sort_map => {:username => [['strongbits_users.username', 'DESC'], 
+                                                             ['strongbits_users.status', 'DESC']], 
+                                               :status => ['strongbits_users.status', 'ASC'],
+                                               :name => ['strongbits_contact_infos.name', 'DESC']},
+                                 :default_sort => ['name', 'ASC'],
+                                 :search_array => ['strongbits_users.username', 'strongbits_contact_infos.name'],
+                                 :per_page => 15)      
+    elsif params[:no_pagination]
+      @hide_pagination = true
+      get_sorted_objects(params)      
+    else
+      if params[:use_default]
+        super
+      else
+        # If you wish to override how the objects are fetched this is the simplest way to do so
+        # The key is that you simply need to call get_sorted_objects with your params and any optional overrides for 
+        # sortable defaults. See sortable.rb for more details on overrides.
+        get_sorted_objects(params)      
+      end
+    end
   end
-  
-  # this action doesn't show pagination
-  def show
-    get_sorted_objects(params)
-  end
-  
-  # this action does a bunch of overrides and does do pagination
-  def edit
-    get_sorted_objects(params, :include_relations => [:contact_info],
-                               :table_headings => [['Username', 'username'], ['Status', 'status'], ['Name', 'name']],
-                               :sort_map => {:username => [['strongbits_users.username', 'DESC'], ['strongbits_users.status', 'DESC']], 
-                                             :status => ['strongbits_users.status', 'ASC'],
-                                             :name => ['strongbits_contact_infos.name', 'DESC']},
-                               :default_sort => ['name', 'ASC'],
-                               :per_page => 15)
-    render :action => 'index'
-  end
-  
-#  TABLE_HEADINGS = [['Status', 'status'],
-#                    ['Name', 'name'],
-#                    ['User email', 'email',],
-#                    ['Created Date', 'created_at']                    ]
-#  
-#  # this uses the key from the SORT_MAP for the desired column to be the default, as well as providing which direction. DESC or ASC 
-#  DEFAULT_SORT = ['email', 'ASC']
-#                    
-#  # this maps the name of the column sorting param to the DB column. The columns without a table default to the model being queried
-#  SORT_MAP = {'status' => ['users.status', 'ASC'], 
-#              'name' => ['contact_infos.firstname', 'ASC'],
-#              'email' => ['users.email', 'ASC'],
-#              'created_at' => ['users.created_at', 'DESC']}
-#
-#  INCLUDED_RELATIONS = [:contact_info]  
-#  
-#  SEARCH_OPTIONS = [['', ''],
-#                        ['Name', 'name'],
-#                        ['User email', 'email']]
-#  def list_users
-#    @headings = TABLE_HEADINGS
-#    get_sorted_objects(User, params, SORT_MAP, INCLUDED_RELATIONS, DEFAULT_SORT)    
-#  end
-#  
-#  SEARCH_MAP = {'email' => ['users.email'],
-#                'name' => ['contact_infos.firstname']}
-#
-#  def search
-#    @search_options = SEARCH_OPTIONS
-#    @headings = TABLE_HEADINGS
-#    search_objects(User, params, SORT_MAP, INCLUDED_RELATIONS, DEFAULT_SORT, SEARCH_MAP)
-#  end
-#  
-#  def list_users_filtered 
-#    @search_options = SEARCH_OPTIONS
-#    @headings = TABLE_HEADINGS
-#    get_sorted_objects(User, params, SORT_MAP, INCLUDED_RELATIONS, DEFAULT_SORT, process_custom_params(params))    
-#  end
-#
-#  def process_custom_params(params)
-#    if params[:status]
-#      conditions = 'users.status = ' + params[:status]
-#    end
-#    if params[:verified]
-#      verified = 'users.email_verified = ' + params[:verified]
-#      if conditions
-#        conditions += ' and ' + verified
-#      else
-#        conditions = verified
-#      end         
-#    end
-#    @extra_params = {:status => params[:status], :verified => params[:verified]}
-#    return conditions
-#  end
 end
