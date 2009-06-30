@@ -10,9 +10,9 @@ ActionView::Base.send(:include, SortableHelper)
 if RAILS_ENV == 'test'
   # only load the example files/routes in development mode
   # TODO easy way to load all controller/model paths instead? Don't know off the top of my head but am sure it's easy
-  require File.join(File.dirname(__FILE__), 'example', 'controllers', 'strongbits', 'users_controller')
-  require File.join(File.dirname(__FILE__), 'example', 'models', 'strongbits', 'user')
-  require File.join(File.dirname(__FILE__), 'example', 'models', 'strongbits', 'contact_info')
+  require File.join(File.dirname(__FILE__), 'example', 'controllers', 'cablecar', 'users_controller')
+  require File.join(File.dirname(__FILE__), 'example', 'models', 'cablecar', 'user')
+  require File.join(File.dirname(__FILE__), 'example', 'models', 'cablecar', 'contact_info')
 
   # install the routes
   require File.join(File.dirname(__FILE__), 'test', 'example_test_routing')

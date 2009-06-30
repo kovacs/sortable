@@ -4,7 +4,7 @@ module ActionController
       def draw
         clear!
         map = Mapper.new(self)
-        map.namespace :strongbits do |strong|
+        map.namespace :cablecar do |strong|
           strong.resources 'users'
         end
         

@@ -1,6 +1,0 @@
-Implement search
-add a template override dir to the view path
-implement conditions that can be used in conjunction with search
-make sure filtering works (extra params)
-document CSS classes and create sample CSS file
-cleanup table partial CSS

@@ -211,7 +211,7 @@ module Sortable
            values<< "%#{params[:q]}%"
           end
           conditions += ' and' if !conditions.blank?
-          conditions = [conditions + ' (' + columns_to_search + ')'] + values unless params[:q].blank?
+          conditions = [conditions + ' (' + columns_to_search + ')'] + values
         end
         return conditions
       end
