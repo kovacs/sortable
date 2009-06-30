@@ -16,6 +16,14 @@ module Sortable
       # 
       # sortable_table User
       # 
+      # This will create a sortable table over all your objects and display all columns.
+      # The simplest way to trim down the columns to display is to pass in a parameter specifying which columns
+      # on your object you'd like to display:
+      #
+      # sortable_table User, :display_columns => ['id', 'email', 'name', 'state', 'created_at']
+      #
+      # This will show the same sortable, searchable, paginated table with only these columns
+      # 
       # If you need a bit more control over how the objects are fetchd and displayed this is
       # the next simplest example:
       #
@@ -36,13 +44,22 @@ module Sortable
       # optional_params:
       # 
       # :per_page - Number of records to show per page. Default is 10
+      #
+      # The next section deals with how to change what's displayed in the table. The first and simplest option is :display_columns.
+      # The more flexible option is to use :table_headings and :sort_map. First we'll go over the simpler option.
+      #
+      # :display_columns - Specifies which columns that you'd like to display in the table. 
+      #
+      # For more flexibility you can use :table_headings and :sort_map. You would most likely use this when you want to display 
+      # attributes from more than one object in the same table or if you need more flexibility with regards to sort rules. 
       # :table_headings - The table heading label and sort key. Default is all the column names for the given class
       # :sort_map - The mapping between the sort key and the table.column to sort on. Default is all the columns for the given class
-      # :default_sort - The default sorting column and direction when displaying the table without any sort params. Default is 'id DESC'
       # :include_relations - Relations to include if you choose to display a column in a related object's table
+      #
+      # :default_sort - The default sorting column and direction when displaying the table without any sort params. Default is 'id DESC'
       # 
-      # Note: if you override :table_headings or :sort_map be aware that will need to override the other setting as well so
-      # that the contents of the column headings match up with the contents of the sort_map they associate with.
+      # Note: You *must* override both :table_headings and :sort_map if you do choose to override so that 
+      # the contents of the column headings match up with the contents of the sort_map they associate with.
       # Also if you override :default_sort you'll need to change the :table_headings and :sort_map if the new :default_sort
       # column doesn't currently reside within the :table_heading and :sort_map collections
       # 
@@ -77,28 +94,26 @@ module Sortable
       def sortable_table(klass, options={})
         @@sortable_table_options ||={}
 
-        table_headings = nil
+        sort_map = HashWithIndifferentAccess.new
 
-        if options[:table_headings].nil?
-          table_headings = klass.column_names.collect do |att|          
-            [att.humanize, att]
-          end
+        if options[:table_headings] &&
+           options[:sort_map]
+           table_headings = options[:table_headings]
+           sort_map.merge!(options[:sort_map])           
         else
-          table_headings = options[:table_headings]
+          display_columns = options[:display_columns].blank? ? klass.column_names : options[:display_columns]
+          table_headings = []
+          klass.column_names.each do |att|
+            if display_columns.include?(att)
+              table_headings << [att.humanize, att]
+              sort_map[att] = ["#{klass.table_name}.#{att}", 'DESC']
+            end
+          end           
         end
 
         default_sort = options[:default_sort].nil? ? ['id', 'DESC'] : options[:default_sort]
         per_page = options[:per_page].nil? ? 10 : options[:per_page]
-        include_relations = options[:include_relations].nil? ? [] : options[:include_relations]
-        
-        sort_map = HashWithIndifferentAccess.new
-        if options[:sort_map].nil?
-          klass.column_names.each do |col|
-            sort_map[col] = ["#{klass.table_name}.#{col}", 'DESC']
-          end
-        else
-          sort_map.merge!(options[:sort_map])
-        end
+        include_relations = options[:include_relations].nil? ? [] : options[:include_relations]        
 
         search_array = options[:search_array].nil? ? sort_map.values.collect {|v| v[0]} : options[:search_array]
 

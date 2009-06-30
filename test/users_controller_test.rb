@@ -45,13 +45,6 @@ class UsersControllerTest < Test::Unit::TestCase
   #fixtures :widgets
 
   def setup
-    # FIXME 12/20/08 Why doesn't this load routes but the one in the list_editor plugin works fine with this technique?
-#    ActionController::Routing::Routes.draw do |map|
-#      map.namespace :strongbits do |strong|
-#        strong.resources 'users'
-#      end
-#    end
-
     @controller = Strongbits::UsersController.new
     @request    = ActionController::TestRequest.new
     @response   = ActionController::TestResponse.new
