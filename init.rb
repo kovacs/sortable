@@ -21,3 +21,13 @@ if RAILS_ENV == 'test'
   VIEW_PATH = File.join(RAILS_ROOT, 'vendor', 'plugins', 'sortable', 'example', 'views')
   ActionController::Base.append_view_path(VIEW_PATH) unless ActionController::Base.view_paths.include?(VIEW_PATH)
 end
+
+COPY_IMAGES = true
+
+if COPY_IMAGES
+  require "ftools"
+
+  File.copy(File.join(File.dirname(__FILE__), 'images', 'logo_opaque.png'), File.join(RAILS_ROOT, 'public', 'images'))
+  File.copy(File.join(File.dirname(__FILE__), 'images', 'arrow_up.gif'), File.join(RAILS_ROOT, 'public', 'images'))
+  File.copy(File.join(File.dirname(__FILE__), 'images', 'arrow_down.gif'), File.join(RAILS_ROOT, 'public', 'images'))
+end
