@@ -91,6 +91,12 @@ module Sortable
       #   
       #   and the table is now sortable by a related object's column and is the default sort value for the table.
       #
+      # Search. You can specify what columns are searchable on your objects as follows:
+      #   :search_array => ['cablecar_users.username', 'cablecar_users.name']
+      # 
+      # Now search queries will only search username and name for users. By default search is enabled for all columns
+      # that are being displayed in the table. This allows you to expand or constrain those values.
+      #
       def sortable_table(klass, options={})
         @@sortable_table_options ||={}
 
