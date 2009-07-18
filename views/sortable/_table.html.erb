@@ -64,7 +64,7 @@
 	    <tr id='<%=dom_id(object)%>' class='<%= klass %>'>
          <% @headings.each do |heading| %>
              <td>
-               <%= object.send(heading[1]) %>
+               <%= object.instance_eval(heading[1]) %>
              </td>
          <% end %>
   		</tr>
