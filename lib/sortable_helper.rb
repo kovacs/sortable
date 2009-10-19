@@ -79,4 +79,20 @@ module SortableHelper
    		result += "</tr>"
    		return result
    end
+   
+   # use this helper to build a row for a set of related objects and display them and their properties in a list
+   def build_display_relations_sub_row(relations_collection, display_prop)
+      result = "<tr><td colspan='10'><ul>"
+      relations_collection.each do |t|
+         result += "<li> <a href='#' onClick='Element.toggle(\"#{dom_id(t)}view\"); toggle_collapse(this); return false;' 	
+                        class='collapse' >#{t.send(display_prop)}</a>
+              <div id='#{dom_id(t)}view' style='display: none;' class='contact_view'>"
+                t.attributes.each do |a|
+                  result +=     "#{a[0]} : #{a[1]}<br/>"
+                end
+          result +=             "</div>	</li>"             
+   		  end
+   		  result += "</ul></td></tr>" 		
+        return result
+     end
 end
