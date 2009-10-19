@@ -65,8 +65,9 @@ module SortableHelper
      "onmouseover='this.style.cursor = \"pointer\"' onmouseout='this.style.cursor=\"auto\"'"
    end
 
-   def table_header
+   def table_header(prefix_columns="")
      result = "<tr class='tableHeaderRow'>"
+     result += prefix_columns
      	 @headings.each do |heading|
          sort_class = sort_td_class_helper heading[1]
       	 result += "<td"
