@@ -122,8 +122,8 @@ module Sortable
         include_relations = options[:include_relations].nil? ? [] : options[:include_relations]        
 
         search_array = options[:search_array].nil? ? sort_map.values.collect {|v| v[0]} : options[:search_array]
-
-        @@sortable_table_options[controller_name] = {:class => klass,
+puts "controller name: #{controller_path}"
+        @@sortable_table_options[controller_path] = {:class => klass,
                                                      :table_headings => table_headings,
                                                      :default_sort => default_sort,
                                                      :sort_map => sort_map,
@@ -134,31 +134,31 @@ module Sortable
         module_eval do
           include Sortable::InstanceMethods
           def sortable_class
-            @@sortable_table_options[controller_name][:class]
+            @@sortable_table_options[controller_path][:class]
           end
 
           def sortable_table_headings
-            @@sortable_table_options[controller_name][:table_headings]
+            @@sortable_table_options[controller_path][:table_headings]
           end
           
           def sortable_default_sort
-            @@sortable_table_options[controller_name][:default_sort]
+            @@sortable_table_options[controller_path][:default_sort]
           end
           
           def sortable_sort_map
-            @@sortable_table_options[controller_name][:sort_map]
+            @@sortable_table_options[controller_path][:sort_map]
           end
           
           def sortable_search_array
-            @@sortable_table_options[controller_name][:search_array]
+            @@sortable_table_options[controller_path][:search_array]
           end
           
           def sortable_per_page
-            @@sortable_table_options[controller_name][:per_page]
+            @@sortable_table_options[controller_path][:per_page]
           end
           
           def sortable_include_relations
-            @@sortable_table_options[controller_name][:include_relations]
+            @@sortable_table_options[controller_path][:include_relations]
           end
         end
     end
