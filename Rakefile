@@ -25,11 +25,12 @@ begin
   require 'jeweler'
   Jeweler::Tasks.new do |gemspec|
     gemspec.name = "sortable_table"
-    gemspec.summary = "Rails plugin to produce a sortable, paginated, searchable table for any model"
-    gemspec.description = "Rails plugin to produce a sortable, paginated, searchable table for any model"
+    gemspec.summary = "Rails 3 gem to produce a sortable, paginated, searchable table for any model"
+    gemspec.description = "Rails 3 gem to produce a sortable, paginated, searchable table for any model"
     gemspec.email = ""
-    gemspec.homepage = "http://github.com/kovacs/sortable"
-    gemspec.authors = ["Michael Kovacs"]
+    gemspec.homepage = "https://github.com/duhast/sortable"
+    gemspec.authors = ["Michael Kovacs", "Oleg Vivtash"]
+    gemspec.add_runtime_dependency 'will_paginate', '~> 3.0.pre2'
   end
   Jeweler::GemcutterTasks.new
 rescue LoadError
