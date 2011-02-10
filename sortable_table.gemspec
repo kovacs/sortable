@@ -5,7 +5,7 @@
 
 Gem::Specification.new do |s|
   s.name = %q{sortable_table}
-  s.version = "0.1.1"
+  s.version = "0.1.2"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Michael Kovacs", "Oleg Vivtash"]
@@ -28,10 +28,10 @@ Gem::Specification.new do |s|
     "images/arrow_down.gif",
     "images/arrow_up.gif",
     "images/logo_opaque.png",
-    "init.rb",
     "install.rb",
-    "lib/sortable.rb",
-    "lib/sortable_helper.rb",
+    "lib/sortable/sortable_core.rb",
+    "lib/sortable/sortable_helper.rb",
+    "lib/sortable_table.rb",
     "sortable_table.gemspec",
     "test/example_test_routing.rb",
     "test/test_helper.rb",
