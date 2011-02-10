@@ -20,3 +20,19 @@ Rake::RDocTask.new(:rdoc) do |rdoc|
   rdoc.rdoc_files.include('README')
   rdoc.rdoc_files.include('lib/**/*.rb')
 end
+
+begin
+  require 'jeweler'
+  Jeweler::Tasks.new do |gemspec|
+    gemspec.name = "sortable_table"
+    gemspec.summary = "Rails plugin to produce a sortable, paginated, searchable table for any model"
+    gemspec.description = "Rails plugin to produce a sortable, paginated, searchable table for any model"
+    gemspec.email = ""
+    gemspec.homepage = "http://github.com/kovacs/sortable"
+    gemspec.authors = ["Michael Kovacs"]
+  end
+  Jeweler::GemcutterTasks.new
+rescue LoadError
+  puts "Jeweler not available. Install it with: gem install jeweler"
+end
+

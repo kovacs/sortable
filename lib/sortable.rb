@@ -274,7 +274,7 @@ module Sortable
       def get_sort_direction(sort, sort_value)
         result = ''
         column = sort_value[0]
-        direction = sort_value[1]
+        direction = sort_value[1] || 'ASC'
         if /_reverse$/.match(sort)
           if direction == 'DESC'
             direction = 'ASC'

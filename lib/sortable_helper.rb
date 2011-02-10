@@ -49,12 +49,12 @@ module SortableHelper
     else
       key += "_reverse" if params[:sort] == param
     end
-    params = {:sort => key, 
+    params = {
+      :action => action,
+      :sort => key,
       :page => nil, # when sorting we start over on page 1
       :q => params[:q]}
-    params.merge!(extra_params)
-
-    return {:action => action, :params => params}
+    params.merge(extra_params)
   end
 
    def row_cell_link(new_location)
@@ -76,6 +76,6 @@ module SortableHelper
    		   result += "</td>"
    		end   
    		result += "</tr>"
-   		return result
+   		return result.html_safe
    end
 end
