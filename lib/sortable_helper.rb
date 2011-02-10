@@ -49,6 +49,7 @@ module SortableHelper
     else
       key += "_reverse" if params[:sort] == param
     end
+    params.delete(:q) if params[:q] && params[:q].strip.blank?
     params = {
       :action => action,
       :sort => key,
