@@ -122,7 +122,6 @@ module Sortable
         include_relations = options[:include_relations].nil? ? [] : options[:include_relations]        
 
         search_array = options[:search_array].nil? ? sort_map.values.collect {|v| v[0]} : options[:search_array]
-puts "controller name: #{controller_path}"
         @@sortable_table_options[controller_path] = {:class => klass,
                                                      :table_headings => table_headings,
                                                      :default_sort => default_sort,
