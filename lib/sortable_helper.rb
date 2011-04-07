@@ -15,13 +15,17 @@ module SortableHelper
   #              @objects contains the collection of objects to be displayed in the table
   #              
   # :search - Whether or not to include a search field for the table. Default is true.
-  #
+  # :extra - An array of extra content that is added to each row. e.g. a link that you'd like to appear on each object.
+  #          Note: Each entry in the array must be a partial. The partial has access to the row "object" via the
+  #                local variable named "object".
+
   def sortable_table(options={})
     paginate = options[:paginate].nil? ? true : options[:paginate]
     partial = options[:partial].nil? ? 'sortable/table' : options[:partial]  
     search = options[:search].nil? ? true : options[:search]
+    extra_cell_content = options[:extra].nil? ? '' : options[:extra]
 
-    result = render(:partial => partial, :locals => {:search => search})
+    result = render(:partial => partial, :locals => {:search => search, :extra => extra_cell_content})
     result += will_paginate(@objects).to_s if paginate
     result
   end
@@ -68,16 +72,16 @@ module SortableHelper
    def table_header(prefix_columns="")
      result = "<tr class='tableHeaderRow'>"
      result += prefix_columns
-     	 @headings.each do |heading|
-         sort_class = sort_td_class_helper heading[1]
-      	 result += "<td"
-   		   result += " class='#{sort_class}'" if !sort_class.blank? 
-   		   result += ">"
-   		   result += sort_link_helper @action, heading[0], heading[1], params
-   		   result += "</td>"
-   		end   
-   		result += "</tr>"
-   		return result
+     @headings.each do |heading|
+       sort_class = sort_td_class_helper heading[1]
+       result += "<td"
+       result += " class='#{sort_class}'" if !sort_class.blank?
+       result += ">"
+       result += sort_link_helper @action, heading[0], heading[1], params
+       result += "</td>"
+     end
+   	 result += "</tr>"
+   	 return result
    end
    
    # use this helper to build a row for a set of related objects and display them and their properties in a list
