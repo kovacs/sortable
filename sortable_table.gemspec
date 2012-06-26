@@ -39,7 +39,7 @@ Gem::Specification.new do |s|
     "views/sortable/_table.html.erb",
     "views/sortable/index.erb"
   ]
-  s.homepage = %q{https://github.com/duhast/sortable}
+  s.homepage = %q{https://github.com/kovacs/sortable}
   s.require_paths = ["lib"]
   s.rubygems_version = %q{1.3.7}
   s.summary = %q{Rails 3 gem to produce a sortable, paginated, searchable table for any model}
