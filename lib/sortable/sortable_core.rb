@@ -118,7 +118,7 @@ module Sortable
         end
 
         default_sort = options[:default_sort].nil? ? ['id', 'DESC'] : options[:default_sort]
-        per_page = options[:per_page].nil? ? 10 : options[:per_page]
+        per_page = [options[:per_page], klass.per_page, 20].compact.first
         include_relations = options[:include_relations].nil? ? [] : options[:include_relations]        
 
         search_array = options[:search_array].nil? ? sort_map.values.collect {|v| v[0]} : options[:search_array]
@@ -273,7 +273,7 @@ module Sortable
       def get_sort_direction(sort, sort_value)
         result = ''
         column = sort_value[0]
-        direction = sort_value[1]
+        direction = sort_value[1] || 'ASC'
         if /_reverse$/.match(sort)
           if direction == 'DESC'
             direction = 'ASC'

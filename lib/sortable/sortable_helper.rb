@@ -53,12 +53,13 @@ module SortableHelper
     else
       key += "_reverse" if params[:sort] == param
     end
-    params = {:sort => key, 
+    params.delete(:q) if params[:q] && params[:q].strip.blank?
+    params = {
+      :action => action,
+      :sort => key,
       :page => nil, # when sorting we start over on page 1
       :q => params[:q]}
-    params.merge!(extra_params)
-
-    return {:action => action, :params => params}
+    params.merge(extra_params)
   end
 
    def row_cell_link(new_location)
@@ -75,28 +76,28 @@ module SortableHelper
      @headings.each do |heading|
        sort_class = sort_td_class_helper heading[1]
        result += "<td"
-       result += " class='#{sort_class}'" if !sort_class.blank?
+       result += " class='#{sort_class}'" if !sort_class.blank? 
        result += ">"
        result += sort_link_helper @action, heading[0], heading[1], params
        result += "</td>"
-     end
-   	 result += "</tr>"
-   	 return result
+     end   
+     result += "</tr>"
+     return result.html_safe
    end
    
    # use this helper to build a row for a set of related objects and display them and their properties in a list
    def build_display_relations_sub_row(relations_collection, display_prop)
       result = "<tr><td colspan='10'><ul>"
       relations_collection.each do |t|
-         result += "<li> <a href='#' onClick='Element.toggle(\"#{dom_id(t)}view\"); toggle_collapse(this); return false;' 	
+         result += "<li> <a href='#' onClick='Element.toggle(\"#{dom_id(t)}view\"); toggle_collapse(this); return false;'   
                         class='collapse' >#{t.send(display_prop)}</a>
               <div id='#{dom_id(t)}view' style='display: none;' class='contact_view'>"
                 t.attributes.each do |a|
                   result +=     "#{a[0]} : #{a[1]}<br/>"
                 end
-          result +=             "</div>	</li>"             
-   		  end
-   		  result += "</ul></td></tr>" 		
+          result +=             "</div> </li>"             
+        end
+        result += "</ul></td></tr>"     
         return result
      end
 end
