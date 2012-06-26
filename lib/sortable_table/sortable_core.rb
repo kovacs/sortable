@@ -1,4 +1,3 @@
-require 'generator'
 
 module Sortable
     def self.included(base)
@@ -209,7 +208,7 @@ module Sortable
         if !params[:q].blank?
           columns_to_search = ''
           values = Array.new        
-          g = Generator.new(search_array)
+          g = Enumerator::Generator.new(search_array)
           g.each do |col|
            columns_to_search += col + ' LIKE ? '
            columns_to_search += 'OR ' unless g.end?
@@ -258,7 +257,7 @@ module Sortable
         # this adds support for more than one sort criteria for a given column
         # for example, status DESC, created_at ASC
         if sort_array[0].class == Array
-          g = Generator.new(sort_array)
+          g = Enumerator::Generator.new(sort_array)
           g.each do |sort_value|
             result = get_sort_direction(sort, sort_value)
             result += ', ' unless g.end?
