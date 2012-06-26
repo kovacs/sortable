@@ -1,6 +1,7 @@
 require 'rake'
 require 'rake/testtask'
 require 'rake/rdoctask'
+require 'bundler/gem_tasks'
 
 desc 'Default: run unit tests.'
 task :default => :test
@@ -12,10 +13,10 @@ Rake::TestTask.new(:test) do |t|
   t.verbose = true
 end
 
-desc 'Generate documentation for the sortable plugin.'
+desc 'Generate documentation for the sortable_table plugin.'
 Rake::RDocTask.new(:rdoc) do |rdoc|
   rdoc.rdoc_dir = 'rdoc'
-  rdoc.title    = 'Sortable'
+  rdoc.title    = 'Sortable Table'
   rdoc.options << '--line-numbers' << '--inline-source'
   rdoc.rdoc_files.include('README')
   rdoc.rdoc_files.include('lib/**/*.rb')
@@ -28,7 +29,7 @@ begin
     gemspec.summary = "Rails 3 gem to produce a sortable, paginated, searchable table for any model"
     gemspec.description = "Rails 3 gem to produce a sortable, paginated, searchable table for any model"
     gemspec.email = ""
-    gemspec.homepage = "https://github.com/duhast/sortable"
+    gemspec.homepage = "https://github.com/kovacs/sortable"
     gemspec.authors = ["Michael Kovacs", "Oleg Vivtash"]
     gemspec.add_runtime_dependency 'will_paginate', '~> 3.0.pre2'
   end
