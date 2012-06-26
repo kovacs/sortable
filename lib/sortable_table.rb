@@ -1,6 +1,6 @@
-require "sortable/version"
+require "sortable_table/version"
 
-module Sortable
+module SortableTable
   # install the example app view path
   VIEW_PATH = File.join(File.dirname(__FILE__), 'views')
   ActionController::Base.append_view_path(VIEW_PATH) unless ActionController::Base.view_paths.include?(VIEW_PATH)
@@ -19,12 +19,9 @@ module Sortable
     ActionController::Base.append_view_path(VIEW_PATH) unless ActionController::Base.view_paths.include?(VIEW_PATH)
   end
 
-  require 'sortable/sortable_core'
-  require 'sortable/sortable_helper'
+  require 'sortable_table/sortable_core'
+  require 'sortable_table/sortable_helper'
 
   ActionView::Base.send(:include, SortableHelper)
   ActionController::Base.send(:include, Sortable)
 end
-
-
-
