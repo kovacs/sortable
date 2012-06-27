@@ -1,7 +1,7 @@
 
 module Sortable
     def self.included(base)
-      base.extend(ClassMethods)
+      base.extend(ClassMethods)      
     end
 
     module ClassMethods
@@ -96,8 +96,12 @@ module Sortable
       # Now search queries will only search username and name for users. By default search is enabled for all columns
       # that are being displayed in the table. This allows you to expand or constrain those values.
       #
+      def sortable_table_options
+        @@sortable_table_options ||={}                
+      end
+      
       def sortable_table(klass, options={})
-        @@sortable_table_options ||={}
+        # sortable_table_options ||={}        
 
         sort_map = HashWithIndifferentAccess.new
 
@@ -121,49 +125,49 @@ module Sortable
         include_relations = options[:include_relations].nil? ? [] : options[:include_relations]        
 
         search_array = options[:search_array].nil? ? sort_map.values.collect {|v| v[0]} : options[:search_array]
-        @@sortable_table_options[controller_path] = {:class => klass,
+        sortable_table_options[controller_path] = {:class => klass,
                                                      :table_headings => table_headings,
                                                      :default_sort => default_sort,
                                                      :sort_map => sort_map,
                                                      :search_array => search_array,
                                                      :per_page => per_page,
                                                      :include_relations => include_relations}
-        
         module_eval do
           include Sortable::InstanceMethods
-          def sortable_class
-            @@sortable_table_options[controller_path][:class]
-          end
-
-          def sortable_table_headings
-            @@sortable_table_options[controller_path][:table_headings]
-          end
-          
-          def sortable_default_sort
-            @@sortable_table_options[controller_path][:default_sort]
-          end
-          
-          def sortable_sort_map
-            @@sortable_table_options[controller_path][:sort_map]
-          end
-          
-          def sortable_search_array
-            @@sortable_table_options[controller_path][:search_array]
-          end
-          
-          def sortable_per_page
-            @@sortable_table_options[controller_path][:per_page]
-          end
-          
-          def sortable_include_relations
-            @@sortable_table_options[controller_path][:include_relations]
-          end
         end
-    end
-      
+        
+      end            
     end
     
     module InstanceMethods      
+      def sortable_class
+        self.class.sortable_table_options[controller_path][:class]
+      end
+
+      def sortable_table_headings
+        self.class.sortable_table_options[controller_path][:table_headings]
+      end
+      
+      def sortable_default_sort
+        self.class.sortable_table_options[controller_path][:default_sort]
+      end
+      
+      def sortable_sort_map
+        self.class.sortable_table_options[controller_path][:sort_map]
+      end
+      
+      def sortable_search_array
+        self.class.sortable_table_options[controller_path][:search_array]
+      end
+      
+      def sortable_per_page
+        self.class.sortable_table_options[controller_path][:per_page]
+      end
+      
+      def sortable_include_relations
+        self.class.sortable_table_options[controller_path][:include_relations]
+      end
+      
       # default impl for listing a collection of objects. Override this action in your controller to fetch objects
       # differently and/or to render a different template.
       def index
