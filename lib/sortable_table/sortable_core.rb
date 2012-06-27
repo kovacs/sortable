@@ -121,7 +121,7 @@ module Sortable
         end
 
         column_procs = options[:column_procs].nil? ? nil : options[:column_procs]
-        default_sort = options[:default_sort].nil? ? ['id', 'DESC'] : options[:default_sort]
+        default_sort = options[:default_sort].nil? ? [sort_map.keys.first, 'DESC'] : options[:default_sort]
         per_page = [options[:per_page], klass.per_page, 20].compact.first
         include_relations = options[:include_relations].nil? ? [] : options[:include_relations]        
 
