@@ -120,6 +120,7 @@ module Sortable
           end           
         end
 
+        column_procs = options[:column_procs].nil? ? nil : options[:column_procs]
         default_sort = options[:default_sort].nil? ? ['id', 'DESC'] : options[:default_sort]
         per_page = [options[:per_page], klass.per_page, 20].compact.first
         include_relations = options[:include_relations].nil? ? [] : options[:include_relations]        
@@ -130,6 +131,7 @@ module Sortable
                                                      :default_sort => default_sort,
                                                      :sort_map => sort_map,
                                                      :search_array => search_array,
+                                                     :column_procs => column_procs, 
                                                      :per_page => per_page,
                                                      :include_relations => include_relations}
         module_eval do
@@ -168,6 +170,9 @@ module Sortable
         self.class.sortable_table_options[controller_path][:include_relations]
       end
       
+      def sortable_column_procs
+        self.class.sortable_table_options[controller_path][:column_procs]        
+      end
       # default impl for listing a collection of objects. Override this action in your controller to fetch objects
       # differently and/or to render a different template.
       def index
@@ -183,6 +188,7 @@ module Sortable
         objects = options[:objects].nil? ? sortable_class : options[:objects]
         include_rel = options[:include_relations].nil? ? sortable_include_relations : options[:include_relations]
         @headings = options[:table_headings].nil? ? sortable_table_headings : options[:table_headings]
+        @column_procs = options[:sortable_column_procs].nil? ? sortable_column_procs : options[:sortable_column_procs]
         sort_map = options[:sort_map].nil? ? sortable_sort_map : HashWithIndifferentAccess.new(options[:sort_map])
         default_sort = options[:default_sort].nil? ? sortable_default_sort : options[:default_sort]
         conditions = options[:conditions].nil? ? '' : options[:conditions]

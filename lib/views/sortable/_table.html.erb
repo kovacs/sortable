@@ -76,7 +76,11 @@
              end %>
          <% @headings.each do |heading| %>
              <td>
-               <%= object.instance_eval(heading[1]) %>
+               <% if @column_procs[heading[1]] %>
+                 <%= @column_procs[heading[1]].call(object) %>
+               <% else %>
+                 <%= object.instance_eval(heading[1]) %>
+               <% end %>
              </td>
          <% end %>
   		</tr>
