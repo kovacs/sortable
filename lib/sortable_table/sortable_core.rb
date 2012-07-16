@@ -99,7 +99,7 @@ module Sortable
       def sortable_table_options
         @@sortable_table_options ||={}                
       end
-      
+
       def sortable_table(klass, options={})
         # sortable_table_options ||={}        
 
@@ -126,11 +126,14 @@ module Sortable
         include_relations = options[:include_relations].nil? ? [] : options[:include_relations]        
 
         search_array = options[:search_array].nil? ? sort_map.values.collect {|v| v[0]} : options[:search_array]
+        search_type = options[:search_type].nil? ? 'MYSQL' : options[:search_type]
+        
         sortable_table_options[controller_path] = {:class => klass,
                                                      :table_headings => table_headings,
                                                      :default_sort => default_sort,
                                                      :sort_map => sort_map,
                                                      :search_array => search_array,
+                                                     :search_type => search_type,
                                                      :column_procs => column_procs, 
                                                      :per_page => per_page,
                                                      :include_relations => include_relations}
@@ -160,6 +163,10 @@ module Sortable
       
       def sortable_search_array
         self.class.sortable_table_options[controller_path][:search_array]
+      end
+      
+      def sortable_search_type
+        self.class.sortable_table_options[controller_path][:search_type]        
       end
       
       def sortable_per_page
@@ -193,8 +200,9 @@ module Sortable
         default_sort = options[:default_sort].nil? ? sortable_default_sort : options[:default_sort]
         conditions = options[:conditions].nil? ? '' : options[:conditions]
         search_array = options[:search_array].nil? ? sortable_search_array : options[:search_array]
+        search_type = options[:search_type].nil? ? sortable_search_type : options[:search_type]
         
-        conditions = process_search(params, conditions, search_array)
+        conditions = process_search(params, conditions, search_array, search_type)
         items_per_page = options[:per_page].nil? ? sortable_per_page : options[:per_page]
        
         @sort_map = sort_map
@@ -213,19 +221,27 @@ module Sortable
                                  :page => page,
                                  :per_page => items_per_page)
       end
+      
+      # supported DB searches
+      MYSQL = 'MYSQL'
+      POSTGRES = "POSTGRES"      
 
-      def process_search(params, conditions, search_array)
+      def process_search(params, conditions, search_array, search_type)
         if !params[:q].blank?
+          search_command = search_type == POSTGRES ? 'ILIKE' : 'LIKE'
+          search_value = search_type == POSTGRES ? params[:q] : "%#{params[:q]}%"
           columns_to_search = ''
           values = Array.new        
-          g = Enumerator::Generator.new(search_array)
-          g.each do |col|
-           columns_to_search += col + ' LIKE ? '
-           columns_to_search += 'OR ' unless g.end?
-           values<< "%#{params[:q]}%"
+          if search_array.size > 1
+            columns_to_search += search_array.first
+            values << search_value
+          else
+            columns_to_search = search_array.join(" #{search_command} ? OR ")            
+            search_array.times {|a| values << search_value}
           end
+          columns_to_search += " #{search_command} ? "
           conditions += ' and' if !conditions.blank?
-          conditions = [conditions + ' (' + columns_to_search + ')'] + values
+          conditions = [conditions + ' (' + columns_to_search + ')'] + values          
         end
         return conditions
       end
@@ -267,16 +283,12 @@ module Sortable
         # this adds support for more than one sort criteria for a given column
         # for example, status DESC, created_at ASC
         if sort_array[0].class == Array
-          g = Enumerator::Generator.new(sort_array)
-          g.each do |sort_value|
-            result = get_sort_direction(sort, sort_value)
-            result += ', ' unless g.end?
-          end
+          sorts = sort_array.collect {|sort_value| get_sort_direction(sort, sort_value)}
+          result = sorts.join(', ')
         else
           result = get_sort_direction(sort, sort_array)
-        end
-        
-        return result
+        end        
+        result
       end
       
       def get_sort_direction(sort, sort_value)
@@ -284,23 +296,14 @@ module Sortable
         column = sort_value[0]
         direction = sort_value[1] || 'ASC'
         if /_reverse$/.match(sort)
-          if direction == 'DESC'
-            direction = 'ASC'
-          else
-            direction = 'DESC'
-          end
+          direction = direction == 'DESC' ? 'ASC' : 'DESC'
         end
         result += column + ' ' + direction        
       end
       
       def get_sort_key(sort)
         i = sort.index('_reverse')
-        if i
-          mapKey = sort[0, i]
-        else
-          mapKey = sort
-        end
-        return mapKey
+        i.blank? ? sort : sort[0, i]
       end
     end
     
