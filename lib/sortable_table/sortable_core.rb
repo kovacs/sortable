@@ -127,6 +127,7 @@ module Sortable
 
         search_array = options[:search_array].nil? ? sort_map.values.collect {|v| v[0]} : options[:search_array]
         search_type = options[:search_type].nil? ? 'MYSQL' : options[:search_type]
+        search_conditions = options[:search_conditions].nil? ? '' : options[:search_conditions]
         
         sortable_table_options[controller_path] = {:class => klass,
                                                      :table_headings => table_headings,
@@ -134,6 +135,7 @@ module Sortable
                                                      :sort_map => sort_map,
                                                      :search_array => search_array,
                                                      :search_type => search_type,
+                                                     :search_conditions => search_conditions,
                                                      :column_procs => column_procs, 
                                                      :per_page => per_page,
                                                      :include_relations => include_relations}
@@ -169,6 +171,10 @@ module Sortable
         self.class.sortable_table_options[controller_path][:search_type]        
       end
       
+      def sortable_search_conditions
+        self.class.sortable_table_options[controller_path][:search_conditions]                
+      end
+      
       def sortable_per_page
         self.class.sortable_table_options[controller_path][:per_page]
       end
@@ -201,8 +207,9 @@ module Sortable
         conditions = options[:conditions].nil? ? '' : options[:conditions]
         search_array = options[:search_array].nil? ? sortable_search_array : options[:search_array]
         search_type = options[:search_type].nil? ? sortable_search_type : options[:search_type]
+        search_conditions = options[:search_conditions].nil? ? sortable_search_conditions : options[:search_conditions]
         
-        conditions = process_search(params, conditions, search_array, search_type)
+        conditions = process_search(params, conditions, {:search_array => search_array, :search_type => search_type, :search_conditions => search_conditions})
         items_per_page = options[:per_page].nil? ? sortable_per_page : options[:per_page]
        
         @sort_map = sort_map
@@ -226,22 +233,26 @@ module Sortable
       MYSQL = 'MYSQL'
       POSTGRES = "POSTGRES"      
 
-      def process_search(params, conditions, search_array, search_type)
+      def process_search(params, conditions, options) 
         if !params[:q].blank?
-          search_command = search_type == POSTGRES ? 'ILIKE' : 'LIKE'
-          search_value = search_type == POSTGRES ? params[:q] : "%#{params[:q]}%"
-          columns_to_search = ''
-          values = Array.new        
-          if search_array.size > 1
-            columns_to_search += search_array.first
-            values << search_value
+          if options[:search_conditions]
+            conditions = [conditions + " #{options[:search_conditions]}"] + [params[:q]]
           else
-            columns_to_search = search_array.join(" #{search_command} ? OR ")            
-            search_array.times {|a| values << search_value}
-          end
-          columns_to_search += " #{search_command} ? "
-          conditions += ' and' if !conditions.blank?
-          conditions = [conditions + ' (' + columns_to_search + ')'] + values          
+            search_command = search_type == POSTGRES ? 'ILIKE' : 'LIKE'
+            search_value = search_type == POSTGRES ? params[:q] : "%#{params[:q]}%"
+            columns_to_search = ''
+            values = Array.new        
+            if search_array.size == 1
+              columns_to_search += search_array.first
+              values << search_value
+            else
+              columns_to_search = search_array.join(" #{search_command} ? OR ")            
+              search_array.size.times {|a| values << search_value}
+            end
+            columns_to_search += " #{search_command} ? "
+            conditions += ' and' if !conditions.blank?
+            conditions = [conditions + ' (' + columns_to_search + ')'] + values          
+          end          
         end
         return conditions
       end
