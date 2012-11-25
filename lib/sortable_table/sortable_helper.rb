@@ -63,7 +63,7 @@ module SortableHelper
   end
 
    def row_cell_link(new_location)
-     mouseover_pointer + "onclick='window.location=\"#{new_location}\"'"
+     raw(mouseover_pointer + "onclick='window.location=\"#{new_location}\"'")
    end
 
    def mouseover_pointer
