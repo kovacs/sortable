@@ -235,9 +235,11 @@ module Sortable
 
       def process_search(params, conditions, options) 
         if !params[:q].blank?
-          if options[:search_conditions]
+          if !options[:search_conditions].blank?
             conditions = [conditions + " #{options[:search_conditions]}"] + [params[:q]]
           else
+            search_type = options[:search_type]
+            search_array = options[:search_array]
             search_command = search_type == POSTGRES ? 'ILIKE' : 'LIKE'
             search_value = search_type == POSTGRES ? params[:q] : "%#{params[:q]}%"
             columns_to_search = ''
